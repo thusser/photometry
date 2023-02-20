@@ -110,7 +110,6 @@ class Photometry:
 
         # coords for aperture
         self._coords = SkyCoord(ra=cat["ra"] * u.degree, dec=cat["dec"] * u.degree)
-        print(self._coords)
 
         # apertures
         self._apertures = SkyCircularAperture(self._coords, r=self._aperture_radius * u.arcsec)
@@ -122,6 +121,10 @@ class Photometry:
         self._columns = [f"c{no}" for no in range(len(cat) - 1)] + ["t"]
 
     def photometry(self):
+        # nothing?
+        if self._photometry is None:
+            return pd.DataFrame()
+
         # add all comps
         phot = self._photometry.copy()
         phot["c"] = phot[self._columns[:-1]].sum(axis=1)
