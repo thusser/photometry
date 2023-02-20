@@ -56,7 +56,11 @@ class Photometry:
 
         # first image?
         if self._photometry is None:
-            self._process_first_image(hdu_list)
+            try:
+                self._process_first_image(hdu_list)
+            except KeyError as e:
+                print(f"Could not process image as first image: {e}")
+                return
 
         # do photometry
         phot_table = aperture_photometry(data, self._apertures).to_pandas()
@@ -106,6 +110,7 @@ class Photometry:
 
         # coords for aperture
         self._coords = SkyCoord(ra=cat["ra"] * u.degree, dec=cat["dec"] * u.degree)
+        print(self._coords)
 
         # apertures
         self._apertures = SkyCircularAperture(self._coords, r=self._aperture_radius * u.arcsec)
