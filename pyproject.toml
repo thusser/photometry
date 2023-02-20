@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "iag-photometry"
+name = "photometry"
 version = "0.1.0"
-description = "Photometry package for IAG"
+description = "Photometry package"
 authors = ["Tim-Oliver Husser <thusser@uni-goettingen.de>"]
 license = "MIT"
 
