@@ -77,8 +77,8 @@ class Photometry:
         new_row = pd.DataFrame(phot_table["target-sky"]).T
         new_row.reset_index(drop=True, inplace=True)
 
-        # add time
-        new_row["time"] = [Time(data.header["DATE-OBS"]).jd]
+        # add time as DATE_OBS + EXPTIME/2
+        new_row["time"] = [(Time(data.header["DATE-OBS"]) + (data.header["EXPTIME"] / 2.0) * u.second).jd]
 
         if self._photometry is None:
             self._photometry = new_row
