@@ -38,7 +38,7 @@ class Photometry:
         # open zip file
         with ZipFile(filename) as zip:
             # loop all files
-            for filename in zip.namelist():
+            for filename in sorted(zip.namelist()):
                 # open FITS file
                 with zip.open(filename, "r") as f:
                     # open FITS file and get CCDData
