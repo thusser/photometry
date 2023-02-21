@@ -19,6 +19,7 @@ class Photometry:
         min_edge_dist: float = 20,
         aperture_radius: float = 4.0,
         sky_annulus_radii: Tuple[float, float] = (6.0, 8.0),
+        catalog: Optional[pd.DataFrame] = None,
     ):
         self._target_coord = target_coord
         self._photometry: Optional[pd.DataFrame] = None
@@ -29,6 +30,7 @@ class Photometry:
         self._min_edge_dist = min_edge_dist
         self._aperture_radius = aperture_radius
         self._sky_annulus_radii = sky_annulus_radii
+        self._catalog = catalog
 
     @staticmethod
     def process_zipfile(filename: str, target_coord: SkyCoord, **kwargs) -> Photometry:
@@ -62,6 +64,10 @@ class Photometry:
                 print(f"Could not process image as first image: {e}")
                 return
 
+        # WCS successful?
+        if "WCSERR" not in hdu_list[1].header or hdu_list[1].header["WCSERR"] == 1:
+            return
+
         # do photometry
         phot_table = aperture_photometry(data, self._apertures).to_pandas()
         phot_table.index = self._columns
@@ -86,27 +92,33 @@ class Photometry:
             self._photometry = pd.concat([self._photometry, new_row], ignore_index=True)
 
     def _process_first_image(self, hdu_list: fits.HDUList):
-        # read catalog
-        cat = Table(hdu_list["CAT"].data).to_pandas()
+        # got a catalog?
+        if self._catalog is not None:
+            # taken given catalog
+            cat = self._catalog
 
-        # build SkyCoords
-        catalog = SkyCoord(ra=cat["ra"] * u.degree, dec=cat["dec"] * u.degree)
-        idx, _, _ = self._target_coord.match_to_catalog_sky(catalog)
-        target_row = cat.iloc[idx]
+        else:
+            # read catalog
+            cat = Table(hdu_list["CAT"].data).to_pandas()
 
-        # drop target from catalog
-        cat.drop([idx], axis=0, inplace=True)
+            # build SkyCoords
+            catalog = SkyCoord(ra=cat["ra"] * u.degree, dec=cat["dec"] * u.degree)
+            idx, _, _ = self._target_coord.match_to_catalog_sky(catalog)
+            target_row = cat.iloc[idx]
 
-        # filter comparison stars by peak value
-        cat = cat[(cat["peak"] > 10000) & (cat["peak"] < 40000)]
+            # drop target from catalog
+            cat.drop([idx], axis=0, inplace=True)
 
-        # filter comparison stars by edge distance
-        height, width = hdu_list[1].data.shape
-        m = self._min_edge_dist
-        cat = cat[(cat["x"] > m) & (cat["y"] > m) & (cat["x"] < width - m) & (cat["y"] < height - m)]
+            # filter comparison stars by peak value
+            cat = cat[(cat["peak"] > 10000) & (cat["peak"] < 40000)]
 
-        # re-add target to catalog
-        cat = pd.concat([cat, pd.DataFrame(target_row).T])
+            # filter comparison stars by edge distance
+            height, width = hdu_list[1].data.shape
+            m = self._min_edge_dist
+            cat = cat[(cat["x"] > m) & (cat["y"] > m) & (cat["x"] < width - m) & (cat["y"] < height - m)]
+
+            # re-add target to catalog
+            cat = pd.concat([cat, pd.DataFrame(target_row).T])
 
         # coords for aperture
         self._coords = SkyCoord(ra=cat["ra"] * u.degree, dec=cat["dec"] * u.degree)
