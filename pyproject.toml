@@ -6,8 +6,8 @@ authors = ["Tim-Oliver Husser <thusser@uni-goettingen.de>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.14"
-astropy = "^5.2.1"
+python = ">=3.10,<3.14"
+astropy = "^6.1.1"
 photutils = "^1.6.0"
 
 [tool.poetry.dev-dependencies]
