@@ -130,7 +130,7 @@ class Photometry:
         )
 
         # column names
-        self._columns = [f"c{no}" for no in range(1, len(cat))] + ["t"]
+        self._columns = [f"c{no}" for no in range(len(cat) - 1)] + ["t"]
 
     def photometry(self):
         # nothing?
